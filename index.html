@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Simulador CAM & Usinagem Inteligente (TopSolid)</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 40px; }
+    header { background: #020617; padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    header h1 { margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    .badge { background: var(--primary); font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
+    nav { display: flex; gap: 6px; padding: 12px 20px; background: #1e293b; overflow-x: auto; border-bottom: 1px solid var(--border); }
+    nav button { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    nav button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .card h2, .card h3 { margin-top: 0; font-size: 1.05rem; color: #e2e8f0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+    input, select, textarea { width: 100%; padding: 9px; border-radius: 6px; border: 1px solid var(--border); background: #0f172a; color: var(--text); font-size: 0.95rem; }
+    button.btn { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    button.btn:hover { background: var(--primary-hover); }
+    button.btn-accent { background: var(--accent); color: #020617; }
+    button.btn-warn { background: var(--warn); color: #020617; }
+    button.btn-danger { background: var(--danger); color: #fff; padding: 5px 10px; font-size: 0.8rem; margin-top: 0; }
+    button.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .sub-tabs button { background: #0f172a; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+    .sub-tabs button.active { background: var(--accent); color: #020617; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); }
+    .alert { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; line-height: 1.4; }
+    .alert-info { background: rgba(59, 130, 246, 0.15); border-left: 4px solid var(--primary); }
+    .alert-warn { background: rgba(245, 158, 11, 0.15); border-left: 4px solid var(--warn); }
+    .alert-danger { background: rgba(239, 68, 68, 0.15); border-left: 4px solid var(--danger); }
+    .alert-success { background: rgba(16, 185, 129, 0.15); border-left: 4px solid var(--accent); }
+    .power-bar-bg { width: 100%; height: 22px; background: #0f172a; border-radius: 11px; overflow: hidden; border: 1px solid var(--border); margin: 8px 0; position: relative; }
+    .power-bar-fill { height: 100%; transition: width 0.3s; }
+    .limit-marker { position: absolute; left: 80%; top: 0; bottom: 0; width: 2px; background: var(--danger); }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+    .modal.open { display: flex; }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 10px; max-width: 600px; width: 100%; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .preview-img { max-width: 100%; max-height: 200px; border-radius: 6px; margin-top: 8px; border: 1px solid var(--border); display: none; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+    .kpi { background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .kpi span { display: block; font-size: 0.78rem; color: var(--muted); }
+    .kpi strong { font-size: 1.2rem; color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚙️ Simulador CAM & Usinagem <span class="badge">TopSolid Ready</span></h1>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button class="btn btn-outline" style="margin:0; padding:6px 12px;" onclick="exportarBanco()">⬇️ Exportar Banco (.json)</button>
+    <label class="btn btn-outline" style="margin:0; padding:6px 12px; cursor:pointer;">
+      ⬆️ Importar Banco
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarBanco(event)" />
+    </label>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="openTab('tab-simulador', this)">🎯 Simulador Principal</button>
+  <button onclick="openTab('tab-ferramentas', this)">🛠️ Ferramentas & Parâmetros</button>
+  <button onclick="openTab('tab-maquinas', this)">🏭 Máquinas & Curva Potência</button>
+  <button onclick="openTab('tab-materiais', this)">🧱 Materiais & Dureza</button>
+  <button onclick="openTab('tab-config', this)">🔑 Config API / Web</button>
+</nav>
+
+<div class="container">
+
+  <!-- ABA 1: SIMULADOR PRINCIPAL -->
+  <div id="tab-simulador" class="tab active">
+    <div class="grid">
+      <!-- Bloco Foto / Desenho -->
+      <div class="card">
+        <h2>1. Desenho Técnico / Foto (Dimensões Acabadas)</h2>
+        <label>Carregar Foto ou Print do Desenho</label>
+        <input type="file" id="desenhoInput" accept="image/*" onchange="previewDesenho(event)" />
+        <img id="previewImg" class="preview-img" alt="Preview do desenho" />
+        <button class="btn btn-outline" onclick="analisarDesenhoIA()">🤖 Extrair Dimensões Acabadas via IA</button>
+        <div id="iaStatus" style="font-size:0.82rem; color:var(--muted); margin-top:6px;"></div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px;">
+          <div>
+            <label>Ø Acabado / Largura (mm)</label>
+            <input type="number" id="acabDim1" value="65" step="0.1" />
+          </div>
+          <div>
+            <label>Comp. Acabado / Prof. (mm)</label>
+            <input type="number" id="acabDim2" value="120" step="0.1" />
+          </div>
+        </div>
+        <label>Parede Mínima ou Balanço L/D (Anti-vibração)</label>
+        <select id="riscoVibracao">
+          <option value="baixo">Normal / Rígido (Sem risco de vibração)</option>
+          <option value="medio">Moderado (Balanço L/D > 3x ou parede < 2mm)</option>
+          <option value="alto">Crítico (Balanço L/D > 5x, parede fina ou alta dureza)</option>
+        </select>
+      </div>
+
+      <!-- Bloco Material em Bruto & Máquina -->
+      <div class="card">
+        <h2>2. Material em Bruto & Máquina</h2>
+        <label>Máquina Selecionada</label>
+        <select id="selMaquina"></select>
+
+        <label>Material e Dureza</label>
+        <select id="selMaterial"></select>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label>Ø Bruto / Largura Bruta (mm)</label>
+            <input type="number" id="brutoDim1" value="76.2" step="0.1" />
+          </div>
+          <div>
+            <label>Comp. Bruto / Altura Bruta (mm)</label>
+            <input type="number" id="brutoDim2" value="125" step="0.1" />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+          <button class="btn" onclick="executarSimulacao()">▶️ Simular Processo</button>
+          <button class="btn btn-warn" onclick="abrirModalAjuste()">🎛️ Ajuste Rápido Parâmetros</button>
+          <button class="btn btn-accent" onclick="buscarFerramentasWeb()">🌐 Sugestão Ferramentas (Web)</button>
+        </div>
+        <div id="badgeAjusteTemp" style="display:none; font-size:0.8rem; color:var(--warn); margin-top:8px;">
+          ⚠️ Usando parâmetros temporários nesta simulação (Banco de dados intacto).
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTADOS DA SIMULAÇÃO -->
+    <div id="resultadoSimulacao" class="card" style="display:none;">
+      <h2>📊 Resultado da Simulação & Estratégia TopSolid</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><span>Tempo Estimado</span><strong id="resTempo">--</strong></div>
+        <div class="kpi"><span>Custo Usinagem</span><strong id="resCusto">--</strong></div>
+        <div class="kpi"><span>RPM Aplicado</span><strong id="resRpm">--</strong></div>
+        <div class="kpi"><span>Potência Exigida</span><strong id="resPotencia">--</strong></div>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:0.82rem;">
+          <span>Uso da Curva de Potência da Máquina</span>
+          <span style="color:var(--danger);">Limite Contínuo: 80%</span>
+        </div>
+        <div class="power-bar-bg">
+          <div id="powerFill" class="power-bar-fill" style="width:0%; background:var(--accent);"></div>
+          <div class="limit-marker" title="Limite máximo contínuo 80%"></div>
+        </div>
+      </div>
+
+      <div id="resAlertas"></div>
+      <div id="resEstrategia" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- SUGESTÕES WEB (MAX 3 POR APLICAÇÃO) -->
+    <div id="resultadoWeb" class="card" style="display:none;">
+      <h2>🌐 Sugestões de Catálogos Web (Seco, Iscar, Walter, Sandvik, Mitsubishi, Kyocera...)</h2>
+      <p style="font-size:0.85rem; color:var(--muted);">Exibindo no máximo 3 sugestões por aplicação apenas quando há ganho real de tempo sobre as ferramentas do seu banco.</p>
+      <div id="listaSugestoesWeb"></div>
+    </div>
+  </div>
+
+  <!-- ABA 2: FERRAMENTAS E PARÂMETROS -->
+  <div id="tab-ferramentas" class="tab">
+    <div class="card">
+      <h2>🛠️ Banco de Dados de Ferramentas (Editável)</h2>
+      <div class="sub-tabs">
+        <button class="active" onclick="switchToolSub('torno-desbaste', this)">Torno - Desbaste</button>
+        <button onclick="switchToolSub('torno-acabamento', this)">Torno - Acabamento</button>
+        <button onclick="switchToolSub('fresa', this)">Fresas (3, 4 e 5 Eixos)</button>
+      </div>
+
+      <!-- SUB-ABA TORNO DESBASTE -->
+      <div id="sub-torno-desbaste" class="tool-sub">
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+          <div><label>Código / Inserto</label><input id="tdNome" placeholder="Ex: CNMG 120408" /></div>
+          <div><label>VC (m/min)</label><input type="number" id="tdVc" value="180" /></div>
+          <div><label>AP Incremento/Face (mm)</label><input type="number" id="tdAp" value="2.5" step="0.1" /></div>
+          <div><label>F Avanço (mm/rot)</label><input type="number" id="tdF" value="0.28" step="0.01" /></div>
+          <div><label>Raio de Ponta (mm)</label><input type="number" id="tdRaio" value="0.8" step="0.1" /></div>
+        </div>
+        <button class="btn" onclick="addFerramentaTorno('desbaste')">+ Salvar no Banco (Desbaste)</button>
+        <table id="tblTornoDesbaste"></table>
+      </div>
+
+      <!-- SUB-ABA TORNO ACABAMENTO -->
+      <div id="sub-torno-acabamento" class="tool-sub" style="display:none;">
+        <div class="alert alert-info">Sobremetal automático aplicado no acabamento: <strong>0,30 mm nos diâmetros</strong>, <strong>0,05 mm na face</strong> e <strong>0,00 mm no corte</strong>.</div>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+          <div><label>Código / Inserto</label><input id="taNome" placeholder="Ex: DNMG 150604" /></div>
+          <div><label>VC (m/min)</label><input type="number" id="taVc" value="240" /></div>
+          <div><label>AP Incremento/Face (mm)</label><input type="number" id="taAp" value="0.3" step="0.05" /></div>
+          <div><label>F Avanço (mm/rot)</label><input type="number" id="taF" value="0.12" step="0.01" /></div>
+          <div><label>Raio de Ponta (mm)</label><input type="number" id="taRaio" value="0.4" step="0.1" /></div>
+        </div>
+        <button class="btn" onclick="addFerramentaTorno('acabamento')">+ Salvar no Banco (Acabamento)</button>
+        <table id="tblTornoAcabamento"></table>
+      </div>
+
+      <!-- SUB-ABA FRESA -->
+      <div id="sub-fresa" class="tool-sub" style="display:none;">
+        <div class="alert alert-info">Sobremetal automático no acabamento (sem vibração): <strong>0,30 mm no piso</strong> e <strong>0,15 mm nas paredes</strong>.</div>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+          <div><label>Descrição Fresa</label><input id="frNome" placeholder="Ex: Fresa Toroidal Ø12" /></div>
+          <div><label>Aplicação</label><select id="frTipo"><option value="desbaste">Desbaste</option><option value="acabamento">Acabamento</option></select></div>
+          <div><label>Ø da Fresa (mm)</label><input type="number" id="frDiam" value="12" step="0.1" /></div>
+          <div><label>Z (Arestas)</label><input type="number" id="frZ" value="5" /></div>
+          <div><label>VC (m/min)</label><input type="number" id="frVc" value="160" /></div>
+          <div><label>AP Altura Corte (mm)</label><input type="number" id="frAp" value="12" step="0.1" /></div>
+          <div><label>Ae Engaj. Lateral (mm)</label><input type="number" id="frAe" value="1.2" step="0.1" /></div>
+          <div><label>Fz Avanço/Aresta (mm)</label><input type="number" id="frFz" value="0.08" step="0.005" /></div>
+        </div>
+        <button class="btn" onclick="addFerramentaFresa()">+ Salvar Fresa no Banco</button>
+        <table id="tblFresas"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 3: MÁQUINAS -->
+  <div id="tab-maquinas" class="tab">
+    <div class="card">
+      <h2>🏭 Cadastro de Máquinas & Proteção de Equipamento</h2>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+        <div><label>Nome da Máquina</label><input id="maqNome" placeholder="Ex: Centro 5 Eixos Hermle" /></div>
+        <div><label>Tipo</label><select id="maqTipo"><option value="torno">Torno CNC</option><option value="fresa3">Fresa 3 Eixos</option><option value="fresa4">Fresa 4 Eixos</option><option value="fresa5">Fresa 5 Eixos</option></select></div>
+        <div><label>RPM Máximo (Trava)</label><input type="number" id="maqRpmMax" value="12000" /></div>
+        <div><label>Potência Nominal (kW)</label><input type="number" id="maqPotMax" value="22" step="0.5" /></div>
+        <div><label>RPM Base da Curva</label><input type="number" id="maqRpmBase" value="1500" /></div>
+        <div><label>Valor Hora-Máquina (R$)</label><input type="number" id="maqHora" value="280" /></div>
+      </div>
+      <button class="btn" onclick="addMaquina()">+ Salvar Máquina</button>
+      <table id="tblMaquinas"></table>
+    </div>
+  </div>
+
+  <!-- ABA 4: MATERIAIS & DUREZA -->
+  <div id="tab-materiais" class="tab">
+    <div class="card">
+      <h2>🧱 Banco de Materiais & Tratamento Térmico (HRC)</h2>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+        <div><label>Material / Liga</label><input id="matNome" placeholder="Ex: Inox 15-5PH" /></div>
+        <div><label>Grupo</label><select id="matGrupo"><option value="aco">Aço (até 58 HRC)</option><option value="inox">Inox (15-5PH / 13-8Mo)</option><option value="titanio">Titânio</option><option value="inconel">Inconel (até 60 HRC)</option><option value="aluminio">Alumínio</option></select></div>
+        <div><label>Dureza (HRC)</label><input type="number" id="matHrc" value="42" max="65" /></div>
+        <div><label>Força Específica Kc1 (N/mm²)</label><input type="number" id="matKc" value="2400" /></div>
+      </div>
+      <button class="btn" onclick="addMaterial()">+ Salvar Material</button>
+      <table id="tblMateriais"></table>
+    </div>
+  </div>
+
+  <!-- ABA 5: CONFIGURAÇÃO API -->
+  <div id="tab-config" class="tab">
+    <div class="card">
+      <h2>🔑 Integração IA (Leitura de Desenho & Catálogos Web)</h2>
+      <p style="font-size:0.9rem; color:var(--muted);">Cole sua chave gratuita da API do Google Gemini para ativar a leitura automática de fotos/desenhos técnicos e a busca online nos catálogos Seco, Iscar, Walter, Sandvik, Mitsubishi, Kyocera, Emuge, Guhring, Taegutec, Ceratizit, Sumitomo e Wolf.</p>
+      <label>Chave API Google Gemini (Salva apenas neste navegador)</label>
+      <input type="password" id="geminiKey" placeholder="AIzaSy..." />
+      <button class="btn" onclick="salvarApiKey()">💾 Salvar Chave</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DE AJUSTE RÁPIDO DE PARÂMETROS (NÃO ALTERA O BANCO) -->
+<div id="modalAjuste" class="modal">
+  <div class="modal-content">
+    <h3>🎛️ Ajuste Temporário de Parâmetros (Apenas Simulação Atual)</h3>
+    <p style="font-size:0.82rem; color:var(--warn);">Estes valores NÃO alteram seu banco de dados permanente.</p>
+    <div id="camposAjusteTemp"></div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="btn" onclick="aplicarAjusteTemp()">Aplicar e Simular</button>
+      <button class="btn btn-outline" onclick="limparAjusteTemp()">Restaurar do Banco</button>
+      <button class="btn btn-danger" onclick="fecharModalAjuste()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// BANCO DE DADOS PADRÃO INICIAL
+const DEFAULT_DB = {
+  maquinas: [
+    { id: 1, nome: "Torno CNC Romi GL 280", tipo: "torno", rpmMax: 4500, potMax: 18.5, rpmBase: 800, valorHora: 220 },
+    { id: 2, nome: "Centro Usinagem 3 Eixos VMC", tipo: "fresa3", rpmMax: 12000, potMax: 20, rpmBase: 1500, valorHora: 250 },
+    { id: 3, nome: "Centro Usinagem 4 Eixos Horizontal", tipo: "fresa4", rpmMax: 14000, potMax: 25, rpmBase: 1800, valorHora: 320 },
+    { id: 4, nome: "Centro 5 Eixos Simultâneos", tipo: "fresa5", rpmMax: 18000, potMax: 30, rpmBase: 2200, valorHora: 450 }
+  ],
+  materiais: [
+    { id: 1, nome: "Aço SAE 4340 Beneficiado", grupo: "aco", hrc: 38, kc: 2200 },
+    { id: 2, nome: "Aço Ferramenta Temperado (58 HRC)", grupo: "aco", hrc: 58, kc: 3400 },
+    { id: 3, nome: "Inox 15-5PH (H900/H1025)", grupo: "inox", hrc: 45, kc: 2650 },
+    { id: 4, nome: "Inox 13-8Mo Endurecido", grupo: "inox", hrc: 48, kc: 2800 },
+    { id: 5, nome: "Titânio Ti-6Al-4V", grupo: "titanio", hrc: 36, kc: 1900 },
+    { id: 6, nome: "Inconel 718 Envelhecido", grupo: "inconel", hrc: 44, kc: 3300 },
+    { id: 7, nome: "Inconel Alta Dureza (60 HRC)", grupo: "inconel", hrc: 60, kc: 3900 },
+    { id: 8, nome: "Alumínio Aeronáutico 7075-T6", grupo: "aluminio", hrc: 15, kc: 850 }
+  ],
+  tornoDesbaste: [
+    { id: 1, nome: "CNMG 120408-PM (Sandvik/Seco)", vc: 160, ap: 2.5, f: 0.28, raio: 0.8 },
+    { id: 2, nome: "WNMG 080408-MM (Inox/Superligas)", vc: 110, ap: 2.0, f: 0.22, raio: 0.8 }
+  ],
+  tornoAcabamento: [
+    { id: 1, nome: "DNMG 150604-MF (Acabamento)", vc: 210, ap: 0.3, f: 0.12, raio: 0.4 },
+    { id: 2, nome: "VCMT 160404-SM (Superligas/Inox)", vc: 140, ap: 0.3, f: 0.10, raio: 0.4 }
+  ],
+  fresas: [
+    { id: 1, nome: "Fresa Toroidal Metal Duro Ø12 R1", tipo: "desbaste", diam: 12, z: 5, vc: 150, ap: 14, ae: 1.2, fz: 0.08 },
+    { id: 2, nome: "Fresa Acabamento 6 Arestas Ø10", tipo: "acabamento", diam: 10, z: 6, vc: 190, ap: 10, ae: 0.15, fz: 0.06 }
+  ]
+};
+
+let db = JSON.parse(localStorage.getItem("simulador_usinagem_db")) || DEFAULT_DB;
+let ajusteTemp = null;
+let imagemBase64 = null;
+
+function saveDB() {
+  localStorage.setItem("simulador_usinagem_db", JSON.stringify(db));
+  renderAll();
+}
+
+function openTab(tabId, btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(tabId).classList.add("active");
+  btn.classList.add("active");
+}
+
+function switchToolSub(sub, btn) {
+  document.querySelectorAll(".tool-sub").forEach(s => s.style.display = "none");
+  document.querySelectorAll(".sub-tabs button").forEach(b => b.classList.remove("active"));
+  document.getElementById("sub-" + sub).style.display = "block";
+  btn.classList.add("active");
+}
+
+function renderAll() {
+  // Selects da tela principal
+  const selMaq = document.getElementById("selMaquina");
+  selMaq.innerHTML = db.maquinas.map(m => `<option value="${m.id}">${m.nome} (${m.tipo.toUpperCase()} | Max ${m.rpmMax} RPM | ${m.potMax}kW)</option>`).join("");
+
+  const selMat = document.getElementById("selMaterial");
+  selMat.innerHTML = db.materiais.map(m => `<option value="${m.id}">${m.nome} — ${m.hrc} HRC</option>`).join("");
+
+  // Tabelas
+  document.getElementById("tblTornoDesbaste").innerHTML = `<tr><th>Inserto</th><th>VC</th><th>AP</th><th>F</th><th>Raio</th><th></th></tr>` +
+    db.tornoDesbaste.map((t, i) => `<tr><td>${t.nome}</td><td>${t.vc}</td><td>${t.ap}mm</td><td>${t.f}</td><td>R${t.raio}</td><td><button class="btn btn-danger" onclick="delItem('tornoDesbaste',${i})">X</button></td></tr>`).join("");
+
+  document.getElementById("tblTornoAcabamento").innerHTML = `<tr><th>Inserto</th><th>VC</th><th>AP</th><th>F</th><th>Raio</th><th></th></tr>` +
+    db.tornoAcabamento.map((t, i) => `<tr><td>${t.nome}</td><td>${t.vc}</td><td>${t.ap}mm</td><td>${t.f}</td><td>R${t.raio}</td><td><button class="btn btn-danger" onclick="delItem('tornoAcabamento',${i})">X</button></td></tr>`).join("");
+
+  document.getElementById("tblFresas").innerHTML = `<tr><th>Fresa</th><th>Tipo</th><th>Ø</th><th>Z</th><th>VC</th><th>AP</th><th>Ae</th><th>Fz</th><th></th></tr>` +
+    db.fresas.map((f, i) => `<tr><td>${f.nome}</td><td>${f.tipo}</td><td>Ø${f.diam}</td><td>${f.z}</td><td>${f.vc}</td><td>${f.ap}</td><td>${f.ae}</td><td>${f.fz}</td><td><button class="btn btn-danger" onclick="delItem('fresas',${i})">X</button></td></tr>`).join("");
+
+  document.getElementById("tblMaquinas").innerHTML = `<tr><th>Máquina</th><th>Tipo</th><th>RPM Máx</th><th>Potência</th><th>R$/h</th><th></th></tr>` +
+    db.maquinas.map((m, i) => `<tr><td>${m.nome}</td><td>${m.tipo}</td><td>${m.rpmMax}</td><td>${m.potMax} kW</td><td>R$ ${m.valorHora}</td><td><button class="btn btn-danger" onclick="delItem('maquinas',${i})">X</button></td></tr>`).join("");
+
+  document.getElementById("tblMateriais").innerHTML = `<tr><th>Material</th><th>Grupo</th><th>Dureza</th><th>Kc1</th><th></th></tr>` +
+    db.materiais.map((m, i) => `<tr><td>${m.nome}</td><td>${m.grupo}</td><td>${m.hrc} HRC</td><td>${m.kc}</td><td><button class="btn btn-danger" onclick="delItem('materiais',${i})">X</button></td></tr>`).join("");
+}
+
+function delItem(key, idx) {
+  db[key].splice(idx, 1);
+  saveDB();
+}
+
+function addFerramentaTorno(tipo) {
+  const p = tipo === "desbaste" ? "td" : "ta";
+  const item = {
+    id: Date.now(),
+    nome: document.getElementById(p + "Nome").value || "Inserto Custom",
+    vc: parseFloat(document.getElementById(p + "Vc").value),
+    ap: parseFloat(document.getElementById(p + "Ap").value),
+    f: parseFloat(document.getElementById(p + "F").value),
+    raio: parseFloat(document.getElementById(p + "Raio").value)
+  };
+  db[tipo === "desbaste" ? "tornoDesbaste" : "tornoAcabamento"].push(item);
+  saveDB();
+}
+
+function addFerramentaFresa() {
+  db.fresas.push({
+    id: Date.now(),
+    nome: document.getElementById("frNome").value || "Fresa Custom",
+    tipo: document.getElementById("frTipo").value,
+    diam: parseFloat(document.getElementById("frDiam").value),
+    z: parseInt(document.getElementById("frZ").value),
+    vc: parseFloat(document.getElementById("frVc").value),
+    ap: parseFloat(document.getElementById("frAp").value),
+    ae: parseFloat(document.getElementById("frAe").value),
+    fz: parseFloat(document.getElementById("frFz").value)
+  });
+  saveDB();
+}
+
+function addMaquina() {
+  db.maquinas.push({
+    id: Date.now(),
+    nome: document.getElementById("maqNome").value || "Máquina CNC",
+    tipo: document.getElementById("maqTipo").value,
+    rpmMax: parseInt(document.getElementById("maqRpmMax").value),
+    potMax: parseFloat(document.getElementById("maqPotMax").value),
+    rpmBase: parseInt(document.getElementById("maqRpmBase").value),
+    valorHora: parseFloat(document.getElementById("maqHora").value)
+  });
+  saveDB();
+}
+
+function addMaterial() {
+  db.materiais.push({
+    id: Date.now(),
+    nome: document.getElementById("matNome").value || "Material Custom",
+    grupo: document.getElementById("matGrupo").value,
+    hrc: parseInt(document.getElementById("matHrc").value),
+    kc: parseFloat(document.getElementById("matKc").value)
+  });
+  saveDB();
+}
+
+// PREVIEW E LEITURA DE DESENHO
+function previewDesenho(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    imagemBase64 = reader.result;
+    const img = document.getElementById("previewImg");
+    img.src = imagemBase64;
+    img.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analisarDesenhoIA() {
+  const key = localStorage.getItem("gemini_api_key");
+  const status = document.getElementById("iaStatus");
+  if (!imagemBase64) { status.innerText = "⚠️ Selecione uma imagem/foto do desenho primeiro."; return; }
+  if (!key) { status.innerText = "⚠️ Configure sua chave API Gemini na aba Config API para leitura automática."; return; }
+
+  status.innerText = "⏳ Analisando desenho técnico...";
+  try {
+    const base64Data = imagemBase64.split(",")[1];
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "Analise este desenho técnico mecânico. Extraia o maior diâmetro ou largura acabada (mm) e o comprimento ou profundidade total acabada (mm). Responda APENAS em JSON no formato: {"dim1": numero, "dim2": numero, "obs": "resumo curto"}" },
+            { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    const txt = data.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(txt);
+    if (parsed.dim1) document.getElementById("acabDim1").value = parsed.dim1;
+    if (parsed.dim2) document.getElementById("acabDim2").value = parsed.dim2;
+    status.innerText = "✅ Dimensões extraídas: " + (parsed.obs || "Sucesso");
+  } catch (err) {
+    status.innerText = "❌ Não foi possível ler automaticamente. Verifique a chave API ou preencha manualmente.";
+  }
+}
+
+// AJUSTE RÁPIDO TEMPORÁRIO
+function abrirModalAjuste() {
+  const maq = db.maquinas.find(m => m.id == document.getElementById("selMaquina").value);
+  const div = document.getElementById("camposAjusteTemp");
+  if (maq.tipo === "torno") {
+    const f = ajusteTemp || { ...db.tornoDesbaste[0] };
+    div.innerHTML = `
+      <label>VC Desbaste (m/min)</label><input type="number" id="tmpVc" value="${f.vc}" />
+      <label>AP Incremento (mm)</label><input type="number" id="tmpAp" value="${f.ap}" step="0.1" />
+      <label>F Avanço (mm/rot)</label><input type="number" id="tmpF" value="${f.f}" step="0.01" />
+    `;
+  } else {
+    const f = ajusteTemp || { ...db.fresas[0] };
+    div.innerHTML = `
+      <label>VC Fresa (m/min)</label><input type="number" id="tmpVc" value="${f.vc}" />
+      <label>AP Altura Corte (mm)</label><input type="number" id="tmpAp" value="${f.ap}" step="0.1" />
+      <label>Ae Engajamento Lateral (mm)</label><input type="number" id="tmpAe" value="${f.ae}" step="0.1" />
+      <label>Fz Avanço por Aresta (mm)</label><input type="number" id="tmpFz" value="${f.fz}" step="0.005" />
+    `;
+  }
+  document.getElementById("modalAjuste").classList.add("open");
+}
+
+function aplicarAjusteTemp() {
+  const maq = db.maquinas.find(m => m.id == document.getElementById("selMaquina").value);
+  if (maq.tipo === "torno") {
+    ajusteTemp = {
+      ...db.tornoDesbaste[0],
+      vc: parseFloat(document.getElementById("tmpVc").value),
+      ap: parseFloat(document.getElementById("tmpAp").value),
+      f: parseFloat(document.getElementById("tmpF").value)
+    };
+  } else {
+    ajusteTemp = {
+      ...db.fresas[0],
+      vc: parseFloat(document.getElementById("tmpVc").value),
+      ap: parseFloat(document.getElementById("tmpAp").value),
+      ae: parseFloat(document.getElementById("tmpAe").value),
+      fz: parseFloat(document.getElementById("tmpFz").value)
+    };
+  }
+  document.getElementById("badgeAjusteTemp").style.display = "block";
+  fecharModalAjuste();
+  executarSimulacao();
+}
+
+function limparAjusteTemp() {
+  ajusteTemp = null;
+  document.getElementById("badgeAjusteTemp").style.display = "none";
+  fecharModalAjuste();
+  executarSimulacao();
+}
+
+function fecharModalAjuste() {
+  document.getElementById("modalAjuste").classList.remove("open");
+}
+
+// MOTOR DE SIMULAÇÃO DE USINAGEM
+function executarSimulacao() {
+  const maq = db.maquinas.find(m => m.id == document.getElementById("selMaquina").value);
+  const mat = db.materiais.find(m => m.id == document.getElementById("selMaterial").value);
+  const bruto1 = parseFloat(document.getElementById("brutoDim1").value);
+  const bruto2 = parseFloat(document.getElementById("brutoDim2").value);
+  const acab1 = parseFloat(document.getElementById("acabDim1").value);
+  const acab2 = parseFloat(document.getElementById("acabDim2").value);
+  const vib = document.getElementById("riscoVibracao").value;
+
+  let alertas = [];
+  let fatorDureza = mat.hrc > 45 ? 0.65 : (mat.hrc > 35 ? 0.82 : 1.0);
+  if (vib === "alto") fatorDureza *= 0.75;
+
+  let rpmCalc = 0, potExigida = 0, tempoMin = 0, estrategiaHtml = "";
+
+  if (maq.tipo === "torno") {
+    const ferrDesb = ajusteTemp || db.tornoDesbaste[0];
+    const ferrAcab = db.tornoAcabamento[0];
+    const vcEfetivo = ferrDesb.vc * fatorDureza;
+    rpmCalc = Math.round((vcEfetivo * 1000) / (Math.PI * bruto1));
+
+    // Proteção de RPM Máximo
+    if (rpmCalc > maq.rpmMax) {
+      alertas.push(`<div class="alert alert-danger">🛡️ <strong>Proteção de RPM:</strong> RPM calculado (${rpmCalc}) excedeu o limite da máquina (${maq.rpmMax} RPM). Travado automaticamente em ${maq.rpmMax} RPM.</div>`);
+      rpmCalc = maq.rpmMax;
+    }
+
+    // Potência de corte: Pc = (ap * f * vc * kc) / (60 * 1000 * rend)
+    let apAtual = ferrDesb.ap;
+    potExigida = (apAtual * ferrDesb.f * vcEfetivo * mat.kc) / (60 * 1000 * 0.8);
+
+    // Curva de potência da máquina (torque constante abaixo do rpmBase)
+    const potDisponivelRpm = rpmCalc < maq.rpmBase ? maq.potMax * (rpmCalc / maq.rpmBase) : maq.potMax;
+    const limite80 = potDisponivelRpm * 0.80;
+
+    if (potExigida > limite80) {
+      const novoAp = +(apAtual * (limite80 / potExigida)).toFixed(2);
+      alertas.push(`<div class="alert alert-warn">⚡ <strong>Curva de Potência (Limite 80%):</strong> Potência inicial (${potExigida.toFixed(1)} kW) ultrapassou 80% da curva neste RPM (${limite80.toFixed(1)} kW). Incremento AP reduzido automaticamente de ${apAtual}mm para <strong>${novoAp}mm</strong> para proteger o motor.</div>`);
+      apAtual = novoAp;
+      potExigida = limite80;
+    }
+
+    // Tempo estimado (Desbaste + Acabamento com sobremetal 0.3mm dia / 0.05mm face / 0.0 corte)
+    const sobremetalRaio = Math.max(0, (bruto1 - acab1) / 2 - 0.15);
+    const passesDesb = Math.max(1, Math.ceil(sobremetalRaio / apAtual));
+    const vfDesb = rpmCalc * ferrDesb.f;
+    const tDesb = (passesDesb * bruto2) / Math.max(1, vfDesb);
+
+    const rpmAcab = Math.min(maq.rpmMax, Math.round((ferrAcab.vc * fatorDureza * 1000) / (Math.PI * acab1)));
+    const tAcab = (acab2 / Math.max(1, rpmAcab * ferrAcab.f)) + 0.5;
+    tempoMin = +(tDesb + tAcab + 1.2).toFixed(2);
+
+    estrategiaHtml = `
+      <h3>🧭 Roteiro e Estratégia TopSolid (Torno)</h3>
+      <ul>
+        <li><strong>1. Faceamento & Desbaste Exterior:</strong> Usar <em>${ferrDesb.nome}</em> (Raio R${ferrDesb.raio}) | VC: ${vcEfetivo.toFixed(0)} m/min | AP: ${apAtual} mm | F: ${ferrDesb.f} mm/rot.</li>
+        <li><strong>2. Sobremetal para Acabamento:</strong> Deixar exatos <strong>0,30 mm no diâmetro</strong>, <strong>0,05 mm na face</strong> e <strong>0,00 mm no corte/sangramento</strong>.</li>
+        <li><strong>3. Acabamento Final:</strong> Usar <em>${ferrAcab.nome}</em> (Raio R${ferrAcab.raio}) a ${rpmAcab} RPM. No TopSolid Turning, ativar controle constante de velocidade de corte (G96) com teto em ${maq.rpmMax} RPM.</li>
+      </ul>`;
+  } else {
+    // FRESA 3, 4 ou 5 EIXOS
+    const fDesb = ajusteTemp || db.fresas.find(f => f.tipo === "desbaste") || db.fresas[0];
+    const fAcab = db.fresas.find(f => f.tipo === "acabamento") || db.fresas[db.fresas.length - 1];
+    const vcEfetivo = fDesb.vc * fatorDureza;
+    rpmCalc = Math.round((vcEfetivo * 1000) / (Math.PI * fDesb.diam));
+
+    if (rpmCalc > maq.rpmMax) {
+      alertas.push(`<div class="alert alert-danger">🛡️ <strong>Proteção de RPM:</strong> RPM (${rpmCalc}) limitado ao máximo da fresadora (${maq.rpmMax} RPM).</div>`);
+      rpmCalc = maq.rpmMax;
+    }
+
+    const vf = rpmCalc * fDesb.z * fDesb.fz; // mm/min
+    let aeAtual = vib === "alto" ? +(fDesb.ae * 0.6).toFixed(2) : fDesb.ae;
+    const qCm3Min = (fDesb.ap * aeAtual * vf) / 1000;
+    potExigida = (qCm3Min * mat.kc) / (60000 * 0.8);
+
+    const potDisponivelRpm = rpmCalc < maq.rpmBase ? maq.potMax * (rpmCalc / maq.rpmBase) : maq.potMax;
+    const limite80 = potDisponivelRpm * 0.80;
+
+    if (potExigida > limite80) {
+      aeAtual = +(aeAtual * (limite80 / potExigida)).toFixed(2);
+      alertas.push(`<div class="alert alert-warn">⚡ <strong>Curva de Potência (Limite 80%):</strong> Engajamento lateral Ae ajustado automaticamente para <strong>${aeAtual} mm</strong> para manter o spindle abaixo de 80% da carga contínua.</div>`);
+      potExigida = limite80;
+    }
+
+    const volRemover = Math.max(500, (bruto1 * bruto1 * bruto2) - (acab1 * acab1 * acab2));
+    const qReal = Math.max(1, (fDesb.ap * aeAtual * vf) / 1000);
+    tempoMin = +((volRemover / 1000) / qReal + 2.5).toFixed(2);
+
+    const sobremetalTexto = vib === "baixo"
+      ? "Deixar <strong>0,30 mm no piso</strong> e <strong>0,15 mm nas paredes</strong> (sem risco de vibração)."
+      : "⚠️ Risco de vibração detectado: deixar <strong>0,40 mm nas paredes</strong> para passe intermediário de alívio antes do acabamento final.";
+
+    const stratEixos = maq.tipo === "fresa5" ? "TopSolid 5X Swarf / Rolling com inclinação de ferramenta (Lead/Tilt 15°) para evitar corte no centro da fresa"
+      : maq.tipo === "fresa4" ? "TopSolid 4X Indexado (3+1) com desbaste trocoidal VoluMill"
+      : "TopSolid VoluMill (Desbaste Trocoidal de Alta Velocidade com AP profundo e Ae reduzido)";
+
+    estrategiaHtml = `
+      <h3>🧭 Roteiro e Estratégia TopSolid (${maq.tipo.toUpperCase()})</h3>
+      <ul>
+        <li><strong>1. Desbaste Principal:</strong> <em>${fDesb.nome}</em> (Ø${fDesb.diam}mm, Z=${fDesb.z}) | ${rpmCalc} RPM | Avanço Vf: ${Math.round(vf)} mm/min | AP: ${fDesb.ap}mm | Ae: ${aeAtual}mm.</li>
+        <li><strong>2. Estratégia CAM Recomendada:</strong> ${stratEixos}.</li>
+        <li><strong>3. Controle de Sobremetal (Acabamento):</strong> ${sobremetalTexto}</li>
+        <li><strong>4. Acabamento Final:</strong> <em>${fAcab.nome}</em> (Ø${fAcab.diam}mm, Z=${fAcab.z}) com concordância constante e entrada em arco tangencial.</li>
+      </ul>`;
+  }
+
+  if (vib !== "baixo") {
+    alertas.push(`<div class="alert alert-info">🧠 <strong>Usinagem Inteligente Anti-Vibração Ativa:</strong> Devido ao balanço/parede ou dureza (${mat.hrc} HRC), priorize fixação rígida (mandril hidráulico/térmico), variação de rotação (SSV) e percurso trocoidal contínuo no TopSolid.</div>`);
+  }
+
+  const pctPot = Math.min(100, Math.round((potExigida / maq.potMax) * 100));
+  const custo = ((tempoMin / 60) * maq.valorHora).toFixed(2);
+
+  document.getElementById("resTempo").innerText = tempoMin + " min";
+  document.getElementById("resCusto").innerText = "R$ " + custo;
+  document.getElementById("resRpm").innerText = rpmCalc + " RPM";
+  document.getElementById("resPotencia").innerText = `${potExigida.toFixed(1)} kW (${pctPot}%)`;
+
+  const fill = document.getElementById("powerFill");
+  fill.style.width = pctPot + "%";
+  fill.style.background = pctPot > 80 ? "var(--danger)" : (pctPot > 65 ? "var(--warn)" : "var(--accent)");
+
+  document.getElementById("resAlertas").innerHTML = alertas.join("");
+  document.getElementById("resEstrategia").innerHTML = estrategiaHtml;
+  document.getElementById("resultadoSimulacao").style.display = "block";
+}
+
+// BUSCA DE FERRAMENTAS NA WEB (MAX 3 POR APLICAÇÃO SE HOUVER GANHO DE TEMPO)
+async function buscarFerramentasWeb() {
+  const resDiv = document.getElementById("resultadoWeb");
+  const listDiv = document.getElementById("listaSugestoesWeb");
+  resDiv.style.display = "block";
+
+  if (!navigator.onLine) {
+    listDiv.innerHTML = `<div class="alert alert-danger">Sem conexão com a internet. O simulador continuará operando normalmente com seu banco de dados local.</div>`;
+    return;
+  }
+
+  const maq = db.maquinas.find(m => m.id == document.getElementById("selMaquina").value);
+  const mat = db.materiais.find(m => m.id == document.getElementById("selMaterial").value);
+  const key = localStorage.getItem("gemini_api_key");
+
+  if (!key) {
+    listDiv.innerHTML = `<div class="alert alert-warn">Configure sua chave API Gemini na aba <strong>Config API / Web</strong> para consultar em tempo real os catálogos Seco, Iscar, Walter, Mitsubishi, Kyocera, Emuge, Guhring, Taegutec, Ceratizit, Sumitomo e Wolf.</div>`;
+    return;
+  }
+
+  listDiv.innerHTML = `<p>🔎 Consultando catálogos (Seco, Iscar, Walter, Mitsubishi, Kyocera, Emuge, Guhring, Taegutec, Ceratizit, Sumitomo, Wolf) para ${mat.nome} (${mat.hrc} HRC)...</p>`;
+
+  try {
+    const prompt = `Atue como especialista de aplicações CNC. Material: ${mat.nome} (${mat.hrc} HRC). Máquina: ${maq.tipo} (Max ${maq.rpmMax} RPM).
+    Consulte ferramentas de alta performance dos catálogos: Seco, Iscar, Walter, Mitsubishi, Kyocera, Emuge, Guhring, Taegutec, Ceratizit, Sumitomo ou Wolf.
+    Retorne NO MÁXIMO 3 sugestões para Desbaste e NO MÁXIMO 3 para Acabamento SOMENTE se proporcionarem ganho real de tempo de usinagem comparado aos parâmetros padrão. Inclua fabricante, código da classe/geometria, VC, avanço e % estimada de redução de tempo. Responda em HTML limpo (listas).`;
+
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }]
+      })
+    });
+    const data = await resp.json();
+    listDiv.innerHTML = data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    listDiv.innerHTML = `<div class="alert alert-danger">Erro ao consultar catálogos online. Verifique sua chave API.</div>`;
+  }
+}
+
+// EXPORTAR / IMPORTAR BANCO DE DADOS ENTRE DISPOSITIVOS
+function exportarBanco() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "banco-usinagem-topsolid.json";
+  a.click();
+}
+
+function importarBanco(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      db = JSON.parse(reader.result);
+      saveDB();
+      alert("✅ Banco de dados atualizado com sucesso!");
+    } catch {
+      alert("❌ Arquivo inválido.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function salvarApiKey() {
+  localStorage.setItem("gemini_api_key", document.getElementById("geminiKey").value.trim());
+  alert("✅ Chave API salva com sucesso neste navegador!");
+}
+
+// REGISTRO DO SERVICE WORKER PARA ÍCONE NA TELA INICIAL (PWA)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+document.getElementById("geminiKey").value = localStorage.getItem("gemini_api_key") || "";
+renderAll();
+</script>
+</body>
+</html>
